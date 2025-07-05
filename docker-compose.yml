@@ -1,0 +1,82 @@
+services:
+  # Frontend - Development
+  api-monitor-dev:
+    build:
+      context: ./api-status-monitor
+      dockerfile: Dockerfile.dev
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./api-status-monitor:/app
+      - /app/node_modules
+    env_file:
+      - ./api-status-monitor/.env.development
+    networks:
+      - frontend_network
+
+  # Frontend - Production
+  api-monitor-prod:
+    build:
+      context: ./api-status-monitor
+      dockerfile: Dockerfile
+    ports:
+      - "3001:80"
+    env_file:
+      - ./api-status-monitor/.env.production
+    environment:
+      - NODE_ENV=production
+    networks:
+      - frontend_network
+
+  # Database (MySQL)
+  db:
+    image: mysql:latest
+    container_name: flask_mysql
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: your_root_password
+      MYSQL_DATABASE: api_monitor_db
+      MYSQL_USER: api_user
+      MYSQL_PASSWORD: api_password
+    ports:
+      - "3307:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    networks:
+      - backend_network
+
+  # Backend (Flask API)
+  flask_app:
+    build:
+      context: ./api-status-monitor-server/service_monitor
+      dockerfile: Dockerfile
+    container_name: flask_app
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./api-status-monitor-server/service_monitor:/app
+    env_file:
+      - ./api-status-monitor-server/service_monitor/.env.production
+    environment:
+      FLASK_APP: app.py
+      FLASK_RUN_HOST: 0.0.0.0
+      FLASK_RUN_PORT: 5000
+      FLASK_ENV: development
+      DB_USER: api_user
+      DB_PASSWORD: api_password
+      DB_NAME: api_monitor_db
+      DB_HOST: db
+    depends_on:
+      - db
+    networks:
+      - backend_network
+      - frontend_network
+
+volumes:
+  mysql_data:
+
+networks:
+  frontend_network:
+    driver: bridge
+  backend_network:
+    driver: bridge
