@@ -1,0 +1,6 @@
+[submodule "moniter_service"]
+	path = moniter_service
+	url = git@github.com:twilight2368/moniter_service.git
+[submodule "monitor-api-web"]
+	path = monitor-api-web
+	url = git@github.com:twilight2368/monitor-api-web.git
